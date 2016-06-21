@@ -1,4 +1,7 @@
 package com.danwink.surfbuilder;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 import jp.objectclub.vecmath.Point3f;
@@ -11,29 +14,17 @@ public class MarchingSolver
 	Tuple3f min;
 	Tuple3f max;
 	float res;
-	Surface surface;
-	Method primFunction;
-
+	
 	float isoLevel;
 	
-	public MarchingSolver( Surface surface, Tuple3f min, Tuple3f max, float res, float isoLevel )
+	public MarchingSolver( Tuple3f min, Tuple3f max, float res, float isoLevel )
 	{
 		primitives = new ArrayList<>();
 		
 		this.min = min;
 		this.max = max;
 		this.res = res;
-		this.surface = surface;
 		this.isoLevel = isoLevel;
-		
-		if( surface.type == Surface.Type.LINEAR )
-		{
-			primFunction = (p, point) -> p.distance( point );
-		}
-		else
-		{
-			primFunction = (p, point) -> p.distance2( point );
-		}
 	}
 	
 	public void addPrimitive( Primitive... primitives )
@@ -54,13 +45,13 @@ public class MarchingSolver
 		
 		//Build out field
 		Point3f point = new Point3f();
-		for( int x = 0; x < xSize; x ++ )
+		for( int x = 0; x < xSize; x++ )
 		{
 			point.x = toFloat( x ) + min.x;
-			for( int y = 0; y < ySize; y ++ )
+			for( int y = 0; y < ySize; y++ )
 			{
 				point.y = toFloat( y ) + min.y;
-				for( int z = 0; z < zSize; z ++ )
+				for( int z = 0; z < zSize; z++ )
 				{
 					point.z = toFloat( z ) + min.z;
 					
@@ -68,9 +59,9 @@ public class MarchingSolver
 					
 					for( Primitive p : this.primitives )
 					{
-						f += surface.getDistance( primFunction.m( p, point ) );
+						f += p.compute( point );
 					}
-					
+										
 					field[x][y][z] = f;
 				}
 			}
@@ -91,7 +82,7 @@ public class MarchingSolver
 					float y1 = toFloat( y+1 ) + min.y;
 					float z0 = toFloat( z ) + min.z;
 					float z1 = toFloat( z+1 ) + min.z;
-					g.p[0].set( x0,  y0,  z0 );
+					g.p[0].set( x0, y0, z0 );
 					g.p[1].set( x1, y0, z0 );
 					g.p[2].set( x1, y1, z0 );
 					g.p[3].set( x0, y1, z0 );
@@ -126,26 +117,22 @@ public class MarchingSolver
 		return i * res;
 	}
 	
-	public boolean diffSign( float a, float b )
-	{
-		return a*b < 0.f;
-	}
-	
 	Point3f vertexInterp( float isolevel, Point3f p1, Point3f p2, float valp1, float valp2 ) {
 		float mu;
-		Point3f p = new Point3f();
-
-		if (Math.abs(isolevel-valp1) < 0.00001f)
-			return(p1);
-		if (Math.abs(isolevel-valp2) < 0.00001f)
-			return(p2);
-		if (Math.abs(valp1-valp2) < 0.00001f)
-			return(p1);
+		
+		if( Math.abs(isolevel-valp1) < 0.00001f )
+			return new Point3f(p1);
+		if( Math.abs(isolevel-valp2) < 0.00001f )
+			return new Point3f(p2);
+		if( Math.abs(valp1-valp2) < 0.00001f )
+			return new Point3f(p1);
 		mu = (isolevel - valp1) / (valp2 - valp1);
+		
+		Point3f p = new Point3f();
 		p.x = p1.x + mu * (p2.x - p1.x);
 		p.y = p1.y + mu * (p2.y - p1.y);
 		p.z = p1.z + mu * (p2.z - p1.z);
-
+		
 		return p;
 	}
 	
@@ -462,8 +449,7 @@ public class MarchingSolver
 		Point3f a, b, c;
 	}
 	
-	int polygonise( GridCell grid, float isolevel, ArrayList<Triangle> triangles ) {
-		int ntriang;
+	public void polygonise( GridCell grid, float isolevel, ArrayList<Triangle> triangles ) {
 		int cubeindex;
 		Point3f[] vertlist = new Point3f[12];
 
@@ -484,63 +470,89 @@ public class MarchingSolver
 		
 		/* Cube is entirely in/out of the surface */
 		if( edgeTable[cubeindex] == 0 )
-		  return(0);
+			return;
 
 		/* Find the vertices where the surface intersects the cube */
 		if( (edgeTable[cubeindex] & 1) != 0 )
-		  vertlist[0] =
-			 vertexInterp(isolevel,grid.p[0],grid.p[1],grid.val[0],grid.val[1]);
+			vertlist[0] = vertexInterp(isolevel,grid.p[0],grid.p[1],grid.val[0],grid.val[1]);
 		if( (edgeTable[cubeindex] & 2) != 0 )
-		  vertlist[1] =
-			 vertexInterp(isolevel,grid.p[1],grid.p[2],grid.val[1],grid.val[2]);
+			vertlist[1] = vertexInterp(isolevel,grid.p[1],grid.p[2],grid.val[1],grid.val[2]);
 		if( (edgeTable[cubeindex] & 4) != 0 )
-		  vertlist[2] =
-			 vertexInterp(isolevel,grid.p[2],grid.p[3],grid.val[2],grid.val[3]);
+			vertlist[2] = vertexInterp(isolevel,grid.p[2],grid.p[3],grid.val[2],grid.val[3]);
 		if( (edgeTable[cubeindex] & 8) != 0 )
-		  vertlist[3] =
-			 vertexInterp(isolevel,grid.p[3],grid.p[0],grid.val[3],grid.val[0]);
+			vertlist[3] = vertexInterp(isolevel,grid.p[3],grid.p[0],grid.val[3],grid.val[0]);
 		if( (edgeTable[cubeindex] & 16) != 0 )
-		  vertlist[4] =
-			 vertexInterp(isolevel,grid.p[4],grid.p[5],grid.val[4],grid.val[5]);
+			vertlist[4] = vertexInterp(isolevel,grid.p[4],grid.p[5],grid.val[4],grid.val[5]);
 		if( (edgeTable[cubeindex] & 32) != 0 )
-		  vertlist[5] =
-			 vertexInterp(isolevel,grid.p[5],grid.p[6],grid.val[5],grid.val[6]);
+			vertlist[5] = vertexInterp(isolevel,grid.p[5],grid.p[6],grid.val[5],grid.val[6]);
 		if( (edgeTable[cubeindex] & 64) != 0 )
-		  vertlist[6] =
-			 vertexInterp(isolevel,grid.p[6],grid.p[7],grid.val[6],grid.val[7]);
+			vertlist[6] = vertexInterp(isolevel,grid.p[6],grid.p[7],grid.val[6],grid.val[7]);
 		if( (edgeTable[cubeindex] & 128) != 0 )
-		  vertlist[7] =
-			 vertexInterp(isolevel,grid.p[7],grid.p[4],grid.val[7],grid.val[4]);
+			vertlist[7] = vertexInterp(isolevel,grid.p[7],grid.p[4],grid.val[7],grid.val[4]);
 		if( (edgeTable[cubeindex] & 256) != 0 )
-		  vertlist[8] =
-			 vertexInterp(isolevel,grid.p[0],grid.p[4],grid.val[0],grid.val[4]);
+			vertlist[8] = vertexInterp(isolevel,grid.p[0],grid.p[4],grid.val[0],grid.val[4]);
 		if( (edgeTable[cubeindex] & 512) != 0 )
-		  vertlist[9] =
-			 vertexInterp(isolevel,grid.p[1],grid.p[5],grid.val[1],grid.val[5]);
+			vertlist[9] = vertexInterp(isolevel,grid.p[1],grid.p[5],grid.val[1],grid.val[5]);
 		if( (edgeTable[cubeindex] & 1024) != 0 )
-		  vertlist[10] =
-			 vertexInterp(isolevel,grid.p[2],grid.p[6],grid.val[2],grid.val[6]);
+			vertlist[10] = vertexInterp(isolevel,grid.p[2],grid.p[6],grid.val[2],grid.val[6]);
 		if( (edgeTable[cubeindex] & 2048) != 0 )
-		  vertlist[11] =
-			 vertexInterp(isolevel,grid.p[3],grid.p[7],grid.val[3],grid.val[7]);
+			vertlist[11] = vertexInterp(isolevel,grid.p[3],grid.p[7],grid.val[3],grid.val[7]);
 
 		/* Create the Triangle */
-		ntriang = 0;
 		for( int i = 0; triTable[cubeindex][i] != -1; i+=3 )
 		{
 			Triangle t = new Triangle();
 			t.a = vertlist[triTable[cubeindex][i  ]];
 			t.b = vertlist[triTable[cubeindex][i+1]];
 			t.c = vertlist[triTable[cubeindex][i+2]];
+			
 			triangles.add( t );
-			ntriang++;
 		}
-
-		return(ntriang);
 	}
 	
-	public interface Method
+	public static void saveTriangles( ArrayList<Triangle> tris, String file )
 	{
-		public float m( Primitive p, Point3f point );
+		ArrayList<Point3f> points = new ArrayList<Point3f>();
+		ArrayList<Integer> indices = new ArrayList<Integer>();
+		for( Triangle t : tris )
+		{
+			indices.add( points.size() );
+			indices.add( points.size()+1 );
+			indices.add( points.size()+2 );
+			points.add( t.a );
+			points.add( t.b );
+			points.add( t.c );
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append( "polyhedron( points=[" );
+		for( int i = 0; i < points.size(); i++ )
+		{
+			Point3f p = points.get( i );
+			sb.append( "[" + p.x + "," + p.y + "," + p.z + "]" );
+			if( i+1 < points.size() )
+			{
+				sb.append( "," );
+			}
+		}
+		sb.append( "],  faces=[" );
+		for( int i = 0; i < indices.size(); i += 3 )
+		{
+			sb.append( "[" + indices.get( i ) + "," + indices.get( i+1 ) + "," + indices.get( i+2 ) + "]" );
+			if( i+4 < points.size() )
+			{
+				sb.append( "," );
+			}
+		}
+		sb.append( "]);" );
+		
+		try 
+		{
+			Files.write( FileSystems.getDefault().getPath( file ), sb.toString().getBytes() );
+		} 
+		catch( IOException e ) 
+		{
+			e.printStackTrace();
+		}
 	}
 }
