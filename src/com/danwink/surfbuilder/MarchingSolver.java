@@ -1,3 +1,4 @@
+package com.danwink.surfbuilder;
 import java.util.ArrayList;
 
 import jp.objectclub.vecmath.Point3f;
@@ -11,9 +12,11 @@ public class MarchingSolver
 	Tuple3f max;
 	float res;
 	Surface surface;
-	MarchingSolver.Method primFunction;
+	Method primFunction;
+
+	float isoLevel;
 	
-	public MarchingSolver( Surface surface, Tuple3f min, Tuple3f max, float res )
+	public MarchingSolver( Surface surface, Tuple3f min, Tuple3f max, float res, float isoLevel )
 	{
 		primitives = new ArrayList<>();
 		
@@ -21,6 +24,7 @@ public class MarchingSolver
 		this.max = max;
 		this.res = res;
 		this.surface = surface;
+		this.isoLevel = isoLevel;
 		
 		if( surface.type == Surface.Type.LINEAR )
 		{
@@ -40,10 +44,8 @@ public class MarchingSolver
 		}
 	}
 	
-	public ArrayList<Point3f> solve()
+	public ArrayList<Triangle> solve()
 	{
-		ArrayList<Point3f> ret = new ArrayList<Point3f>();
-		
 		int xSize = toInt( max.x - min.x ) + 1;
 		int ySize = toInt( max.y - min.y ) + 1;
 		int zSize = toInt( max.z - min.z ) + 1;
@@ -74,47 +76,44 @@ public class MarchingSolver
 			}
 		}
 		
+		ArrayList<Triangle> triangles = new ArrayList<Triangle>();
+		GridCell g = new GridCell();
 		//Marching cubes time
 		for( int x = 0; x < xSize-1; x ++ )
 		{
-			point.x = toFloat( x ) + min.x;
 			for( int y = 0; y < ySize-1; y ++ )
 			{
-				point.y = toFloat( y ) + min.y;
 				for( int z = 0; z < zSize-1; z ++ )
 				{
-					point.z = toFloat( z ) + min.z;
-					float f = field[x][y][z];
+					float x0 = toFloat( x ) + min.x;
+					float x1 = toFloat( x+1 ) + min.x;
+					float y0 = toFloat( y ) + min.y;
+					float y1 = toFloat( y+1 ) + min.y;
+					float z0 = toFloat( z ) + min.z;
+					float z1 = toFloat( z+1 ) + min.z;
+					g.p[0].set( x0,  y0,  z0 );
+					g.p[1].set( x1, y0, z0 );
+					g.p[2].set( x1, y1, z0 );
+					g.p[3].set( x0, y1, z0 );
+					g.p[4].set( x0, y0, z1 );
+					g.p[5].set( x1, y0, z1 );
+					g.p[6].set( x1, y1, z1 );
+					g.p[7].set( x0, y1, z1 );
+					g.val[0] = field[x+0][y+0][z+0];
+					g.val[1] = field[x+1][y+0][z+0];
+					g.val[2] = field[x+1][y+1][z+0];
+					g.val[3] = field[x+0][y+1][z+0];
+					g.val[4] = field[x+0][y+0][z+1];
+					g.val[5] = field[x+1][y+0][z+1];
+					g.val[6] = field[x+1][y+1][z+1];
+					g.val[7] = field[x+0][y+1][z+1];
 					
-					//x
-					float f2 = field[x+1][y][z];
-					if( x+1 < xSize && diffSign( f, f2 ) )
-					{
-						float s = -f / (f2 - f);
-						ret.add( new Point3f( point.x + res*s, point.y, point.z ) );
-					}
-					
-					//y
-					f2 = field[x][y+1][z];
-					if( y+1 < ySize && diffSign( f, f2 ) )
-					{
-						float s = -f / (f2 - f);
-						ret.add( new Point3f( point.x, point.y + res*s, point.z ) );
-					}
-					
-					//z
-					f2 = field[x][y][z+1];
-					if( y+1 < ySize && diffSign( f, f2 ) )
-					{
-						float s = -f / (f2 - f);
-						ret.add( new Point3f( point.x, point.y, point.z + res*s ) );
-					}
+					polygonise( g, isoLevel, triangles );
 				}
 			}
 		}
 		
-		
-		return ret;
+		return triangles;
 	}
 	
 	public int toInt( float f )
@@ -448,9 +447,17 @@ public class MarchingSolver
 	{
 		float[] val = new float[8];
 		Point3f[] p = new Point3f[8];
+		
+		public GridCell()
+		{
+			for( int i = 0; i < p.length; i++ )
+			{
+				p[i] = new Point3f();
+			}
+		}
 	}
 	
-	public class Triangle
+	public static class Triangle
 	{
 		Point3f a, b, c;
 	}
@@ -466,15 +473,15 @@ public class MarchingSolver
 		  tells us which vertices are inside of the surface
 		*/
 		cubeindex = 0;
-		if (grid.val[0] < isolevel) cubeindex |= 1;
-		if (grid.val[1] < isolevel) cubeindex |= 2;
-		if (grid.val[2] < isolevel) cubeindex |= 4;
-		if (grid.val[3] < isolevel) cubeindex |= 8;
-		if (grid.val[4] < isolevel) cubeindex |= 16;
-		if (grid.val[5] < isolevel) cubeindex |= 32;
-		if (grid.val[6] < isolevel) cubeindex |= 64;
-		if (grid.val[7] < isolevel) cubeindex |= 128;
-
+		if (grid.val[0] > isolevel) cubeindex |= 1;
+		if (grid.val[1] > isolevel) cubeindex |= 2;
+		if (grid.val[2] > isolevel) cubeindex |= 4;
+		if (grid.val[3] > isolevel) cubeindex |= 8;
+		if (grid.val[4] > isolevel) cubeindex |= 16;
+		if (grid.val[5] > isolevel) cubeindex |= 32;
+		if (grid.val[6] > isolevel) cubeindex |= 64;
+		if (grid.val[7] > isolevel) cubeindex |= 128;
+		
 		/* Cube is entirely in/out of the surface */
 		if( edgeTable[cubeindex] == 0 )
 		  return(0);
@@ -525,6 +532,7 @@ public class MarchingSolver
 			t.a = vertlist[triTable[cubeindex][i  ]];
 			t.b = vertlist[triTable[cubeindex][i+1]];
 			t.c = vertlist[triTable[cubeindex][i+2]];
+			triangles.add( t );
 			ntriang++;
 		}
 

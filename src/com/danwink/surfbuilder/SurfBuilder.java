@@ -1,7 +1,10 @@
+package com.danwink.surfbuilder;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.ArrayList;
+
+import com.danwink.surfbuilder.MarchingSolver.Triangle;
 
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
@@ -68,25 +71,22 @@ public class SurfBuilder
 	
 	public static class InverseSquareSurface extends Surface
 	{
-		float crossover;
-		
-		public InverseSquareSurface( float crossover )
+		public InverseSquareSurface()
 		{
 			super();
-			this.crossover = crossover;
 		}
 		
 		@Override
 		public float compute2( float distance2 )
 		{
-			return (1.f / distance2) - crossover;
+			return (1.f / distance2);
 		}		
 	}
 	
 	public static void main( String[] args )
 	{
-		Surface s = new InverseSquareSurface( 3 );
-		MarchingSolver solver = new MarchingSolver( s, new Vector3f( -1, -1, -1 ), new Vector3f( 2, 2, 2 ), .1f );
+		Surface s = new InverseSquareSurface();
+		MarchingSolver solver = new MarchingSolver( s, new Vector3f( -1, -1, -1 ), new Vector3f( 2, 2, 2 ), .1f, 20 );
 		
 		Point3f p0 = new Point3f();
 		Point3f p1 = new Point3f( 1, 0, 0 );
@@ -97,22 +97,46 @@ public class SurfBuilder
 		solver.addPrimitive( new Line( p0, p2 ) );
 		solver.addPrimitive( new Line( p0, p3 ) );
 		
-		ArrayList<Point3f> points = solver.solve();
+		ArrayList<Triangle> triangles = solver.solve();
+		ArrayList<Point3f> points = new ArrayList<Point3f>();
+		ArrayList<Integer> indices = new ArrayList<Integer>();
+		
+		for( Triangle t : triangles )
+		{
+			indices.add( points.size() );
+			indices.add( points.size()+1 );
+			indices.add( points.size()+2 );
+			points.add( t.a );
+			points.add( t.b );
+			points.add( t.c );
+		}
+		
 		
 		StringBuilder sb = new StringBuilder();
-		for( Point3f p : points )
+		sb.append( "polyhedron( points=[" );
+		for( int i = 0; i < points.size(); i++ )
 		{
-			sb.append( p.x );
-			sb.append( " " );
-			sb.append( p.y );
-			sb.append( " " );
-			sb.append( p.z );
-			sb.append( "\n" );
+			Point3f p = points.get( i );
+			sb.append( "[" + p.x + "," + p.y + "," + p.z + "]" );
+			if( i+1 < points.size() )
+			{
+				sb.append( "," );
+			}
 		}
+		sb.append( "],  faces=[" );
+		for( int i = 0; i < indices.size(); i += 3 )
+		{
+			sb.append( "[" + indices.get( i ) + "," + indices.get( i+1 ) + "," + indices.get( i+2 ) + "]" );
+			if( i+4 < points.size() )
+			{
+				sb.append( "," );
+			}
+		}
+		sb.append( "]);" );
 
 		try 
 		{
-			Files.write( FileSystems.getDefault().getPath( "test.xyz" ), sb.toString().getBytes() );
+			Files.write( FileSystems.getDefault().getPath( "test.scad" ), sb.toString().getBytes() );
 		} 
 		catch( IOException e ) 
 		{
