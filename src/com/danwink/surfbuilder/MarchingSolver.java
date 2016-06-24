@@ -47,6 +47,7 @@ public class MarchingSolver
 		Point3f point = new Point3f();
 		for( int x = 0; x < xSize; x++ )
 		{
+			System.out.println( (x / (float)xSize) * .5f );
 			point.x = toFloat( x ) + min.x;
 			for( int y = 0; y < ySize; y++ )
 			{
@@ -72,6 +73,7 @@ public class MarchingSolver
 		//Marching cubes time
 		for( int x = 0; x < xSize-1; x ++ )
 		{
+			System.out.println( (x / (float)xSize) * .5f + .5f ); 
 			for( int y = 0; y < ySize-1; y ++ )
 			{
 				for( int z = 0; z < zSize-1; z ++ )

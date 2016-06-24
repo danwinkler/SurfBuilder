@@ -8,10 +8,9 @@ import jp.objectclub.vecmath.Vector3f;
 
 public class SurfBuilder 
 {
-	
 	public static void main( String[] args )
 	{
-		MarchingSolver solver = new MarchingSolver( new Vector3f( -1, -1, -1 ), new Vector3f( 3, 3, 3 ), .03f, 40 );
+		MarchingSolver solver = new MarchingSolver( new Vector3f( -1, -1, -1 ), new Vector3f( 3, 3, 3 ), .03f, 30 );
 		
 		Point3f p0 = new Point3f();
 		Point3f p1 = new Point3f( 1, 0, 0 );
