@@ -10,7 +10,7 @@ import com.phyloa.dlib.util.DMath;
 
 public class Tree 
 {
-	public static class Branch implements Primitive
+	public static class Branch extends Primitive
 	{
 		Point3f p0;
 		Point3f p1;

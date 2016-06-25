@@ -17,6 +17,8 @@ public class MarchingSolver
 	
 	float isoLevel;
 	
+	public boolean verbose = false;
+	
 	public MarchingSolver( Tuple3f min, Tuple3f max, float res, float isoLevel )
 	{
 		primitives = new ArrayList<>();
@@ -31,6 +33,7 @@ public class MarchingSolver
 	{
 		for( Primitive p : primitives )
 		{
+			p.owner = this;
 			this.primitives.add( p );
 		}
 	}
@@ -47,7 +50,7 @@ public class MarchingSolver
 		Point3f point = new Point3f();
 		for( int x = 0; x < xSize; x++ )
 		{
-			System.out.println( (x / (float)xSize) * .5f );
+			if( verbose ) System.out.println( (x / (float)xSize) * .5f );
 			point.x = toFloat( x ) + min.x;
 			for( int y = 0; y < ySize; y++ )
 			{
@@ -60,7 +63,7 @@ public class MarchingSolver
 					
 					for( Primitive p : this.primitives )
 					{
-						f += p.compute( point );
+						f += fixReturn( p.compute( point ) );
 					}
 										
 					field[x][y][z] = f;
@@ -73,7 +76,7 @@ public class MarchingSolver
 		//Marching cubes time
 		for( int x = 0; x < xSize-1; x ++ )
 		{
-			System.out.println( (x / (float)xSize) * .5f + .5f ); 
+			if( verbose ) System.out.println( (x / (float)xSize) * .5f + .5f ); 
 			for( int y = 0; y < ySize-1; y ++ )
 			{
 				for( int z = 0; z < zSize-1; z ++ )
@@ -117,6 +120,13 @@ public class MarchingSolver
 	public float toFloat( int i )
 	{
 		return i * res;
+	}
+	
+	public static float fixReturn( float v )
+	{
+		if( Float.isNaN( v ) ) return 0;
+		if( Float.isInfinite( v ) ) return Float.MAX_VALUE;
+		return v;
 	}
 	
 	Point3f vertexInterp( float isolevel, Point3f p1, Point3f p2, float valp1, float valp2 ) {
