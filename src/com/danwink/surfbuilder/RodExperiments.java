@@ -11,40 +11,40 @@ import jp.objectclub.vecmath.Vector3f;
 
 public class RodExperiments
 {	
-	public static ArrayList<Triangle> experiment3Line( float backOff, float isoLevel, Preset.Line.DistanceModifier dm )
+	public static ArrayList<Triangle> experiment3Line( float backOff, float isoLevel, Preset.DistanceModifier dm )
 	{
 		MarchingSolver solver = new MarchingSolver( new Vector3f( -1, -1, -1 ), new Vector3f( 2, 2, 2 ), .03f, isoLevel );
 		
-		Preset.Line a = new Preset.Line( new Point3f( backOff, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
-		Preset.Line b = new Preset.Line( new Point3f( 0, backOff, 0 ), new Point3f( 0, 1, 0 ), dm );
-		Preset.Line c = new Preset.Line( new Point3f( 0, 0, backOff ), new Point3f( 0, 0, 1 ), dm );
+		Preset.InvExpLine a = new Preset.InvExpLine( new Point3f( backOff, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
+		Preset.InvExpLine b = new Preset.InvExpLine( new Point3f( 0, backOff, 0 ), new Point3f( 0, 1, 0 ), dm );
+		Preset.InvExpLine c = new Preset.InvExpLine( new Point3f( 0, 0, backOff ), new Point3f( 0, 0, 1 ), dm );
 		
 		solver.addPrimitive( a, b, c );
 		
 		return solver.solve();
 	}
 	
-	public static ArrayList<Triangle> experiment2Line( float backOff, float isoLevel, Preset.Line.DistanceModifier dm )
+	public static ArrayList<Triangle> experiment2Line( float backOff, float isoLevel, Preset.DistanceModifier dm )
 	{
 		MarchingSolver solver = new MarchingSolver( new Vector3f( -2, -1, -1 ), new Vector3f( 2, 1, 1 ), .03f, isoLevel );
 		
-		Preset.Line a = new Preset.Line( new Point3f( backOff, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
-		Preset.Line b = new Preset.Line( new Point3f( -backOff, 0, 0 ), new Point3f( -1, 0, 0 ), dm );
+		Preset.InvExpLine a = new Preset.InvExpLine( new Point3f( backOff, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
+		Preset.InvExpLine b = new Preset.InvExpLine( new Point3f( -backOff, 0, 0 ), new Point3f( -1, 0, 0 ), dm );
 		
 		solver.addPrimitive( a, b );
 		
 		return solver.solve();
 	}
 	
-	public static ArrayList<Triangle> makeExample( Preset.Line.DistanceModifier dm )
+	public static ArrayList<Triangle> makeExample( Preset.DistanceModifier dm )
 	{
 		MarchingSolver solver = new MarchingSolver( new Vector3f( -1, -1, -1 ), new Vector3f( 2, 2, 2 ), .03f, 40 );
-		Preset.Line a = new Preset.Line( new Point3f( 0, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
+		Preset.InvExpLine a = new Preset.InvExpLine( new Point3f( 0, 0, 0 ), new Point3f( 1, 0, 0 ), dm );
 		solver.addPrimitive( a );
 		return solver.solve();
 	}
 	
-	public static void createExperiment( String name, Preset.Line.DistanceModifier dm )
+	public static void createExperiment( String name, Preset.DistanceModifier dm )
 	{
 		float[] backOffs = new float[] { 0f, .05f, .1f, .15f, .2f };
 		float[] isoLevels = new float[] { 10, 20, 40, 80, 160 };

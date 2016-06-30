@@ -40,7 +40,7 @@ public class SoftRodExperiments
 	public static ArrayList<Triangle> makeExample()
 	{
 		MarchingSolver solver = new MarchingSolver( new Vector3f( -1, -1, -1 ), new Vector3f( 2, 2, 2 ), .03f, 40 );
-		Preset.Line a = new Preset.Line( new Point3f( 0, 0, 0 ), new Point3f( 1, 0, 0 ) );
+		Preset.InvExpLine a = new Preset.InvExpLine( new Point3f( 0, 0, 0 ), new Point3f( 1, 0, 0 ) );
 		solver.addPrimitive( a );
 		return solver.solve();
 	}
