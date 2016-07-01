@@ -15,6 +15,41 @@ public class Preset
 		}		
 	}
 	
+	public static class PullCone extends Primitive
+	{
+		Point3f base;
+		Vector3f dir;
+		float strength;
+		float variance;
+		
+		public PullCone( Point3f base, Vector3f dir, float strength, float variance )
+		{
+			this.base = base;
+			this.dir = dir;
+			this.strength = strength;
+			this.variance = variance;
+		}
+		
+		public float compute( Point3f p )
+		{
+			Vector3f a = new Vector3f( p );
+			a.sub( base );
+			
+			Vector3f an = new Vector3f( a );
+			an.normalize();
+			
+			float adotdir = a.dot( dir );
+			float dirdotdir = dir.dot( dir );
+			
+			Vector3f b = new Vector3f( dir );
+			b.scale( adotdir / dirdotdir );
+			
+			return -(float)(strength * Math.abs( an.dot( dir ) ) * Math.exp( -variance * a.lengthSquared() )); 
+			
+			//return -(strength /* * Math.abs( an.dot( dir ) )*/ / a.lengthSquared());
+		}
+	}
+	
 	public static interface DistanceModifier
 	{
 		public float compute( float d );

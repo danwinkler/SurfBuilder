@@ -17,6 +17,8 @@ public class SoftLineExp
 			return 1f - (float)Math.sin( d*Math.PI ) * .5f;
 		};
 		
+		dm = d -> 1;
+		
 		Preset.FieldFunction ff = Preset.MakeSoftLineFF( 1, 3 );
 		//ff = Preset.INVERSE_SQUARE;
 		
@@ -31,7 +33,7 @@ public class SoftLineExp
 		};
 		
 		Vector3f up = new Vector3f( 0, 0, 1 );
-		
+		/*
 		int num = 3;
 		for( int i = 0; i < 6; i++ )
 		{
@@ -47,7 +49,17 @@ public class SoftLineExp
 			solver.addPrimitive( new Preset.Line( p0, p1, up, ff, dm, nf ) );
 			solver.addPrimitive( new Preset.Line( p0, p3, up, ff, dm, nf ) );
 			solver.addPrimitive( new Preset.Line( p3, p2, up, ff, dm, nf ) );
-		}
+		}*/
+		
+		Point3f p0 = new Point3f( 0, 0, 0 );
+		Point3f p1 = new Point3f( 10, 0, 0 );
+		Point3f p2 = new Point3f( 0, 10, 0 );
+		
+		Vector3f puller = new Vector3f( 0, 0, 1 );
+		
+		solver.addPrimitive( new Preset.Line(p0, p1, up, ff, dm, nf) );
+		solver.addPrimitive( new Preset.Line(p0, p2, up, ff, dm, nf) );
+		solver.addPrimitive( new Preset.PullCone( p0, puller, .5f, .1f ) );
 		
 		ArrayList<Triangle> triangles = solver.solve();
 		
