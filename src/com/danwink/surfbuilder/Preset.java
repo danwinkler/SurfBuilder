@@ -21,13 +21,20 @@ public class Preset
 		Vector3f dir;
 		float strength;
 		float variance;
+		boolean twoSided;
 		
-		public PullCone( Point3f base, Vector3f dir, float strength, float variance )
+		public PullCone( Point3f base, Vector3f dir, float strength, float variance, boolean twoSided )
 		{
 			this.base = base;
 			this.dir = dir;
 			this.strength = strength;
 			this.variance = variance;
+			this.twoSided = twoSided;
+		}
+		
+		public PullCone( Point3f base, Vector3f dir, float strength, float variance )
+		{
+			this( base, dir, strength, variance, true );
 		}
 		
 		public float compute( Point3f p )
@@ -42,11 +49,18 @@ public class Preset
 			float dirdotdir = dir.dot( dir );
 			
 			Vector3f b = new Vector3f( dir );
-			b.scale( adotdir / dirdotdir );
+			float bscale = adotdir / dirdotdir; 
+			b.scale( bscale );
 			
-			return -(float)(strength * Math.abs( an.dot( dir ) ) * Math.exp( -variance * a.lengthSquared() )); 
+			Vector3f bp = new Vector3f( p );
+			bp.sub( b );
+			bp.sub( base );
 			
-			//return -(strength /* * Math.abs( an.dot( dir ) )*/ / a.lengthSquared());
+			float andotdir = (twoSided ? (float)Math.acos( Math.abs( an.dot( dir ) ) ) : an.dot( dir ) );
+			
+			//return (float)(-strength * andotdir * Math.exp( -variance * a.lengthSquared() )); //blob
+			return -(float)(strength * Math.exp( -variance * (((twoSided || bscale > 0 ? bscale : bscale*bscale) + bp.lengthSquared())))); // Cone
+			//return -(float)((twoSided || bscale > 0 ? bscale : bscale*bscale) * (1.f / bp.lengthSquared()));
 		}
 	}
 	
@@ -85,7 +99,11 @@ public class Preset
 		Point3f p0;
 		Point3f p1;
 		Vector3f normal;
-		float normalLength;
+		
+		float p0Pullback = 0;
+		float p1Pullback = 1;
+		Point3f p0Computed;
+		Point3f p1Computed;
 		
 		FieldFunction ff;
 		DistanceModifier dm;
@@ -95,6 +113,10 @@ public class Preset
 		{
 			this.p0 = p0;
 			this.p1 = p1;
+			 
+			this.p0Computed = new Point3f( p0 );
+			this.p1Computed = new Point3f( p1 );
+			
 			this.normal = normal;
 			
 			this.ff = ff;
@@ -102,19 +124,24 @@ public class Preset
 			this.nf = nf;
 		}
 		
+		public Line( Point3f p0, Point3f p1, FieldFunction ff )
+		{
+			this( p0, p1, new Vector3f(0, 0, 1), ff, d -> 1, (n, v) -> 1 );
+		}
+		
 		public float compute( Point3f p )
 		{
-			Vector3f v = new Vector3f( p1 );
-			v.sub( p0 );
+			Vector3f v = new Vector3f( p1Computed );
+			v.sub( p0Computed );
 			Vector3f w = new Vector3f( p );
-			w.sub( p0 );
+			w.sub( p0Computed );
 			
 			float c1 = w.dot( v );
 			if( c1 < 0 )
 			{
 				Vector3f p0p = new Vector3f( p );
-				p0p.sub( p0 );
-				return ff.compute( p.distanceSquared( p0 ) ) * dm.compute( 0 ) * nf.compute( normal, p0p );
+				p0p.sub( p0Computed );
+				return ff.compute( p.distanceSquared( p0Computed ) ) * dm.compute( 0 ) * nf.compute( normal, p0p );
 			}
 			
 			
@@ -122,18 +149,36 @@ public class Preset
 			if( c2 < c1 )
 			{
 				Vector3f p1p = new Vector3f( p );
-				p1p.sub( p1 );
-				return ff.compute( p.distanceSquared( p1 ) ) * dm.compute( 1 ) * nf.compute( normal, p1p );
+				p1p.sub( p1Computed );
+				return ff.compute( p.distanceSquared( p1Computed ) ) * dm.compute( 1 ) * nf.compute( normal, p1p );
 			}
 			
 			float b = c1 / c2;
 			Point3f pb = new Point3f( v );
 			pb.scale( b );
-			pb.add( p0 );
+			pb.add( p0Computed );
 			Vector3f pbp = new Vector3f( p );
 			pbp.sub( pb );
 			float ret = ff.compute( p.distanceSquared( pb ) ) * dm.compute( b ) * nf.compute( normal, pbp ); 
 			return ret;
+		}
+		
+		public void setPullback( float a, float b )
+		{
+			p0Pullback = a;
+			p1Pullback = b;
+			Vector3f v0 = new Vector3f( p1 );
+			v0.sub( p0 );
+			Vector3f v1 = new Vector3f( v0 );
+			
+			v0.scale( p0Pullback );
+			v1.scale( 1 - p1Pullback );
+			
+			p0Computed.set( p0 );
+			p0Computed.add( v0 );
+			
+			p1Computed.set( p0 );
+			p1Computed.add( v1 );
 		}
 	}
 	
