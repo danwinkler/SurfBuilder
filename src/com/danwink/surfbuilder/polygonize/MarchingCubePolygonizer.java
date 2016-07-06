@@ -1,91 +1,31 @@
-package com.danwink.surfbuilder;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
+package com.danwink.surfbuilder.polygonize;
+
 import java.util.ArrayList;
 
-import jp.objectclub.vecmath.Point3f;
-import jp.objectclub.vecmath.Tuple3f;
+import com.danwink.surfbuilder.GridCell;
+import com.danwink.surfbuilder.Triangle;
+import com.danwink.surfbuilder.fields.FieldBuilder.Field;
 
-public class MarchingSolver
+import jp.objectclub.vecmath.Point3f;
+
+public class MarchingCubePolygonizer extends Polygonizer
 {
-	public ArrayList<Primitive> primitives;
-	
-	Tuple3f min;
-	Tuple3f max;
-	float res;
-	
-	float isoLevel;
-	
-	public boolean verbose = false;
-	
-	public MarchingSolver( Tuple3f min, Tuple3f max, float res, float isoLevel )
+	public ArrayList<Triangle> polygonize( Field f, float isoLevel )
 	{
-		primitives = new ArrayList<>();
-		
-		this.min = min;
-		this.max = max;
-		this.res = res;
-		this.isoLevel = isoLevel;
-	}
-	
-	public void addPrimitive( Primitive... primitives )
-	{
-		for( Primitive p : primitives )
-		{
-			this.primitives.add( p );
-		}
-	}
-	
-	public ArrayList<Triangle> solve()
-	{
-		int xSize = toInt( max.x - min.x ) + 1;
-		int ySize = toInt( max.y - min.y ) + 1;
-		int zSize = toInt( max.z - min.z ) + 1;
-		
-		float[][][] field = new float[xSize][ySize][zSize];
-		
-		//Build out field
-		Point3f point = new Point3f();
-		for( int x = 0; x < xSize; x++ )
-		{
-			if( verbose ) System.out.println( (x / (float)xSize) * .5f );
-			point.x = toFloat( x ) + min.x;
-			for( int y = 0; y < ySize; y++ )
-			{
-				point.y = toFloat( y ) + min.y;
-				for( int z = 0; z < zSize; z++ )
-				{
-					point.z = toFloat( z ) + min.z;
-					
-					float f = 0;
-					
-					for( Primitive p : this.primitives )
-					{
-						f += fixReturn( p.compute( point ) );
-					}
-										
-					field[x][y][z] = f;
-				}
-			}
-		}
-		
 		ArrayList<Triangle> triangles = new ArrayList<Triangle>();
 		GridCell g = new GridCell();
-		//Marching cubes time
-		for( int x = 0; x < xSize-1; x ++ )
-		{
-			if( verbose ) System.out.println( (x / (float)xSize) * .5f + .5f ); 
-			for( int y = 0; y < ySize-1; y ++ )
+		for( int x = 0; x < f.xSize-1; x ++ )
+		{ 
+			for( int y = 0; y < f.ySize-1; y ++ )
 			{
-				for( int z = 0; z < zSize-1; z ++ )
+				for( int z = 0; z < f.zSize-1; z ++ )
 				{
-					float x0 = toFloat( x ) + min.x;
-					float x1 = toFloat( x+1 ) + min.x;
-					float y0 = toFloat( y ) + min.y;
-					float y1 = toFloat( y+1 ) + min.y;
-					float z0 = toFloat( z ) + min.z;
-					float z1 = toFloat( z+1 ) + min.z;
+					float x0 = ( x ) * f.res + f.min.x;
+					float x1 = ( x+1 ) * f.res + f.min.x;
+					float y0 = ( y ) * f.res + f.min.y;
+					float y1 = ( y+1 ) * f.res + f.min.y;
+					float z0 = ( z ) * f.res + f.min.z;
+					float z1 = ( z+1 ) * f.res + f.min.z;
 					g.p[0].set( x0, y0, z0 );
 					g.p[1].set( x1, y0, z0 );
 					g.p[2].set( x1, y1, z0 );
@@ -94,14 +34,14 @@ public class MarchingSolver
 					g.p[5].set( x1, y0, z1 );
 					g.p[6].set( x1, y1, z1 );
 					g.p[7].set( x0, y1, z1 );
-					g.val[0] = field[x+0][y+0][z+0];
-					g.val[1] = field[x+1][y+0][z+0];
-					g.val[2] = field[x+1][y+1][z+0];
-					g.val[3] = field[x+0][y+1][z+0];
-					g.val[4] = field[x+0][y+0][z+1];
-					g.val[5] = field[x+1][y+0][z+1];
-					g.val[6] = field[x+1][y+1][z+1];
-					g.val[7] = field[x+0][y+1][z+1];
+					g.val[0] = f.field[x+0][y+0][z+0];
+					g.val[1] = f.field[x+1][y+0][z+0];
+					g.val[2] = f.field[x+1][y+1][z+0];
+					g.val[3] = f.field[x+0][y+1][z+0];
+					g.val[4] = f.field[x+0][y+0][z+1];
+					g.val[5] = f.field[x+1][y+0][z+1];
+					g.val[6] = f.field[x+1][y+1][z+1];
+					g.val[7] = f.field[x+0][y+1][z+1];
 					
 					polygonise( g, isoLevel, triangles );
 				}
@@ -109,23 +49,6 @@ public class MarchingSolver
 		}
 		
 		return triangles;
-	}
-	
-	public int toInt( float f )
-	{
-		return (int) (f / res);
-	}
-	
-	public float toFloat( int i )
-	{
-		return i * res;
-	}
-	
-	public static float fixReturn( float v )
-	{
-		if( Float.isNaN( v ) ) return 0;
-		if( Float.isInfinite( v ) ) return Float.MAX_VALUE;
-		return v;
 	}
 	
 	Point3f vertexInterp( float isolevel, Point3f p1, Point3f p2, float valp1, float valp2 ) {
@@ -499,52 +422,6 @@ public class MarchingSolver
 			t.c = vertlist[triTable[cubeindex][i+2]];
 			
 			triangles.add( t );
-		}
-	}
-	
-	public static void saveTriangles( ArrayList<Triangle> tris, String file )
-	{
-		ArrayList<Point3f> points = new ArrayList<Point3f>();
-		ArrayList<Integer> indices = new ArrayList<Integer>();
-		for( Triangle t : tris )
-		{
-			indices.add( points.size() );
-			indices.add( points.size()+1 );
-			indices.add( points.size()+2 );
-			points.add( t.a );
-			points.add( t.b );
-			points.add( t.c );
-		}
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append( "polyhedron( points=[" );
-		for( int i = 0; i < points.size(); i++ )
-		{
-			Point3f p = points.get( i );
-			sb.append( "[" + p.x + "," + p.y + "," + p.z + "]" );
-			if( i+1 < points.size() )
-			{
-				sb.append( "," );
-			}
-		}
-		sb.append( "],  faces=[" );
-		for( int i = 0; i < indices.size(); i += 3 )
-		{
-			sb.append( "[" + indices.get( i ) + "," + indices.get( i+1 ) + "," + indices.get( i+2 ) + "]" );
-			if( i+4 < points.size() )
-			{
-				sb.append( "," );
-			}
-		}
-		sb.append( "]);" );
-		
-		try 
-		{
-			Files.write( FileSystems.getDefault().getPath( file ), sb.toString().getBytes() );
-		} 
-		catch( IOException e ) 
-		{
-			e.printStackTrace();
 		}
 	}
 }

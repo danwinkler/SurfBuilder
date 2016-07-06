@@ -3,6 +3,6 @@ import jp.objectclub.vecmath.Point3f;
 
 public abstract class Primitive
 {
-	public MarchingSolver owner;
 	public abstract float compute( Point3f p );
+	public float r;
 }

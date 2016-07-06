@@ -58,8 +58,8 @@ public class Preset
 			
 			float andotdir = (twoSided ? (float)Math.acos( Math.abs( an.dot( dir ) ) ) : an.dot( dir ) );
 			
-			//return (float)(-strength * andotdir * Math.exp( -variance * a.lengthSquared() )); //blob
-			return -(float)(strength * Math.exp( -variance * (((twoSided || bscale > 0 ? bscale : bscale*bscale) + bp.lengthSquared())))); // Cone
+			return (float)(-strength * Math.abs( an.dot( dir ) ) * Math.exp( -variance * a.lengthSquared() )); //blob
+			//return -(float)(strength * Math.exp( -variance * (((twoSided || bscale > 0 ? bscale : bscale*bscale) + bp.lengthSquared())))); // Cone
 			//return -(float)((twoSided || bscale > 0 ? bscale : bscale*bscale) * (1.f / bp.lengthSquared()));
 		}
 	}

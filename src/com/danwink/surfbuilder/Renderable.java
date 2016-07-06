@@ -3,8 +3,6 @@ package com.danwink.surfbuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
-
 public abstract class Renderable
 {
 	HashMap<String, Float> vars = new HashMap<String, Float>();

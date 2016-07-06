@@ -2,8 +2,6 @@ package com.danwink.surfbuilder;
 
 import java.util.ArrayList;
 
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
-
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
 
@@ -28,6 +26,8 @@ public class WebLike
 			main.scale( 1.f/ mLength );
 			
 			float sumDot = 0;
+			/*
+			//This should now be done in a blending function
 			for( Primitive prim : owner.primitives )
 			{
 				if( prim == this ) continue;
@@ -37,6 +37,7 @@ public class WebLike
 				v.scale( 1.f / vLength );
 				sumDot += MarchingSolver.fixReturn( (float)Math.acos( v.dot( main ) ) ) * (1.f / vLength*2);
 			}
+			*/
 			
 			return field*.5f + sumDot * .1f;
 		}

@@ -1,8 +1,6 @@
 package com.danwink.surfbuilder;
 import java.util.ArrayList;
 
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
-
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
 

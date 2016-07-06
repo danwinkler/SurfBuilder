@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
 import com.danwink.surfbuilder.Preset.SoftLine;
 
 import jp.objectclub.vecmath.Point3f;

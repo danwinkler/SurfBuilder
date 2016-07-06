@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
 
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
 import com.phyloa.dlib.util.DMath;
 
 public class Tree 

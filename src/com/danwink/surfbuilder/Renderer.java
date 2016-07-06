@@ -1,7 +1,7 @@
 package com.danwink.surfbuilder;
 
 import java.util.ArrayList;
-import com.danwink.surfbuilder.MarchingSolver.Triangle;
+
 import com.danwink.surfbuilder.Renderable.Var;
 
 import controlP5.ControlEvent;
@@ -43,7 +43,8 @@ public class Renderer extends PApplet implements ControlListener
 		for( int i = 0; i < r.varList.size(); i++ )
 		{
 			Var v = r.varList.get( i );
-			cp5.addSlider( v.name ).setPosition( 5, 25*i + 5 ).setRange( v.min, v.max ).setValue( r.vars.get( v.name ) );
+			float value = r.vars.get( v.name );
+			cp5.addSlider( v.name ).setPosition( 5, 25*i + 5 ).setRange( v.min, v.max ).setValue( value ).setHeight( 20 );
 		}
 	}
 	
@@ -71,6 +72,7 @@ public class Renderer extends PApplet implements ControlListener
 	public void draw()
 	{
 		background( 0 );
+		lights();
 		
 		perspective( PI/3.f, (float)width/height, .1f, 100 );
 		
@@ -86,6 +88,7 @@ public class Renderer extends PApplet implements ControlListener
 		cam.beginHUD();
 		ortho();
 		camera();
+		noLights();
 		cp5.draw();
 		cam.endHUD();
 	}
