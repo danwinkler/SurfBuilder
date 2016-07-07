@@ -4,9 +4,10 @@ import java.util.ArrayList;
 
 import com.danwink.surfbuilder.fields.FieldBuilder;
 import com.danwink.surfbuilder.fields.FieldBuilder.Field;
-import com.danwink.surfbuilder.fields.MaxFieldBuilder;
+import com.danwink.surfbuilder.fields.SumFieldBuilder;
 import com.danwink.surfbuilder.fields.SuperEllipticalFieldBuilder;
 import com.danwink.surfbuilder.polygonize.MarchingCubePolygonizer;
+import com.danwink.surfbuilder.polygonize.ZeroBasedMarchingCubePolygonizer;
 
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
@@ -83,10 +84,53 @@ public class RendererTest
 		}
 	}
 	
+	public static class Test2 extends Renderable
+	{
+		public Test2()
+		{
+			var( "radius", 0, 1.5f );
+			var( "slA", 0, 2 );
+			var( "slB", 0, 6 );
+		}
+		
+		public ArrayList<Triangle> getTris() 
+		{
+			Preset.FieldFunction slff = Preset.MakeSoftLineFF( get("slA"), get( "slB" ) );
+			Preset.FieldFunction ff = d -> {
+				float r = get( "radius");
+				return ((d / (r*r)) - 1);
+				//return (r*r) - slff.compute( d );
+				//return (1.f / d) - r;
+			};
+			
+			Point3f p0 = new Point3f( 0, 0, 0 );
+			Point3f p1 = new Point3f( 10, 0, 0 );
+			Point3f p2 = new Point3f( 0, 10, 0 );
+			
+			Preset.Line l0 = new Preset.Line( p0, p1, ff );
+			l0.setPullback( get("radius") / 10.f, get("radius") / 10.f );
+			Preset.Line l1 = new Preset.Line( p0, p2, ff );
+			l1.setPullback( get("radius") / 10.f, get("radius") / 10.f );
+			
+			ArrayList<Primitive> primitives = new ArrayList<Primitive>();
+			
+			primitives.add( l0 );
+			primitives.add( l1 );
+			
+			FieldBuilder fb = new SumFieldBuilder();
+			Field f = fb.buildField( primitives, new Vector3f( -3, -3, -3 ), new Vector3f( 13, 13, 3 ), .5f );
+			
+			ZeroBasedMarchingCubePolygonizer mc = new ZeroBasedMarchingCubePolygonizer();
+			
+			return mc.polygonize( f );
+		}
+	}
+	
 	public static void main( String[] args )
 	{
 		//Renderable obj = new PullConeTest();
-		Renderable obj = new TwoLine();
+		//Renderable obj = new TwoLine();
+		Renderable obj = new Test2();
 		
 		Renderer r = new Renderer( obj );
 		r.run();

@@ -9,7 +9,7 @@ public class SoftLineExp
 {	
 	public static void main( String[] args )
 	{	
-		MarchingSolver solver = new MarchingSolver( new Vector3f( -30, -30, -10 ), new Vector3f( 30, 30, 10 ), .6f, .3f );
+		MarchingSolver solver = new MarchingSolver( new Vector3f( -30, -30, -10 ), new Vector3f( 30, 30, 10 ), .6f, .15f );
 		solver.verbose = true;
 		
 		Preset.DistanceModifier dm = d -> {
@@ -53,12 +53,14 @@ public class SoftLineExp
 		Point3f p0 = new Point3f( 0, 0, 0 );
 		Point3f p1 = new Point3f( 10, 0, 0 );
 		Point3f p2 = new Point3f( 0, 10, 0 );
+		Point3f p3 = new Point3f( 0, 5, 0 );
 		
 		Vector3f puller = new Vector3f( 0, 0, 1 );
 		
 		solver.addPrimitive( new Preset.Line(p0, p1, up, ff, dm, nf) );
 		solver.addPrimitive( new Preset.Line(p0, p2, up, ff, dm, nf) );
 		solver.addPrimitive( new Preset.PullCone( p0, puller, .5f, .1f ) );
+		solver.addPrimitive( new Preset.PullCone( p3, puller, -.5f, .1f ) );
 		
 		ArrayList<Triangle> triangles = solver.solve();
 		
