@@ -32,7 +32,7 @@ public class MaxFieldBuilder extends FieldBuilder
 				{
 					point.z = z * res + min.z;
 					
-					float f = 0;
+					float f = Float.MIN_VALUE;
 					
 					for( Primitive p : primitives )
 					{

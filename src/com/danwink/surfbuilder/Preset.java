@@ -20,10 +20,10 @@ public class Preset
 		Point3f p0, p1;
 		Vector3f v, vn;
 		float l, l2;
-		float s = 1;
+		float s = 2;
 		float s2 = s*s;
 		
-		public ConvLine( Point3f p0, Point3f p1 )
+		public ConvLine( Point3f p0, Point3f p1, float s )
 		{
 			this.p0 = p0;
 			this.p1 = p1;
@@ -36,6 +36,9 @@ public class Preset
 			
 			vn = new Vector3f( v );
 			vn.scale( 1.f / l );
+			
+			this.s = s;
+			this.s2 = s*s;
 		}
 
 		public float compute( Point3f p )
@@ -44,7 +47,6 @@ public class Preset
 			d.sub( p0 );
 			
 			float dl2 = d.lengthSquared();
-			float dl = (float)Math.sqrt( dl2 );
 			
 			float x = d.dot( vn );
 			float x2 = x*x;
