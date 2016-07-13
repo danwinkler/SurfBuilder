@@ -2,12 +2,12 @@ package com.danwink.surfbuilder;
 
 import java.util.ArrayList;
 
+import com.danwink.surfbuilder.fields.ConvolutionFieldBuilder;
 import com.danwink.surfbuilder.fields.FieldBuilder;
 import com.danwink.surfbuilder.fields.FieldBuilder.Field;
 import com.danwink.surfbuilder.fields.SumFieldBuilder;
 import com.danwink.surfbuilder.fields.SuperEllipticalFieldBuilder;
 import com.danwink.surfbuilder.polygonize.MarchingCubePolygonizer;
-import com.danwink.surfbuilder.polygonize.ZeroBasedMarchingCubePolygonizer;
 
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
@@ -40,8 +40,6 @@ public class RendererTest
 			Primitive pr0 = new Preset.Line( p0, p1, ff );
 			Primitive pr1 = new Preset.Line( p0, p2, ff );
 			
-			pr0.r = get( "r1" );
-			pr0.r = get( "r2" );
 			
 			primitives.add( pr0 );
 			primitives.add( pr1 );
@@ -88,41 +86,30 @@ public class RendererTest
 	{
 		public Test2()
 		{
-			var( "radius", 0, 1.5f );
-			var( "slA", 0, 2 );
-			var( "slB", 0, 6 );
+			var( "isolevel", 0, 2f, .5f );
+			var( "angle", 0, (float)Math.PI/2.f, 0 );
 		}
 		
 		public ArrayList<Triangle> getTris() 
-		{
-			Preset.FieldFunction slff = Preset.MakeSoftLineFF( get("slA"), get( "slB" ) );
-			Preset.FieldFunction ff = d -> {
-				float r = get( "radius");
-				return ((d / (r*r)) - 1);
-				//return (r*r) - slff.compute( d );
-				//return (1.f / d) - r;
-			};
+		{			
+			Point3f p0 = new Point3f( 5, 0, 0 );
+			Point3f p1 = new Point3f( 0, 0, 0 );
+			Point3f p2 = new Point3f( 5 + (float)Math.cos( get( "angle" ) ) * 5, (float)Math.sin( get( "angle" ) ) * 5, 0 );
 			
-			Point3f p0 = new Point3f( 0, 0, 0 );
-			Point3f p1 = new Point3f( 10, 0, 0 );
-			Point3f p2 = new Point3f( 0, 10, 0 );
-			
-			Preset.Line l0 = new Preset.Line( p0, p1, ff );
-			l0.setPullback( get("radius") / 10.f, get("radius") / 10.f );
-			Preset.Line l1 = new Preset.Line( p0, p2, ff );
-			l1.setPullback( get("radius") / 10.f, get("radius") / 10.f );
+			Preset.ConvLine l0 = new Preset.ConvLine( p0, p1 );
+			Preset.ConvLine l1 = new Preset.ConvLine( p0, p2 );
 			
 			ArrayList<Primitive> primitives = new ArrayList<Primitive>();
 			
 			primitives.add( l0 );
 			primitives.add( l1 );
 			
-			FieldBuilder fb = new SumFieldBuilder();
+			SumFieldBuilder fb = new SumFieldBuilder();
 			Field f = fb.buildField( primitives, new Vector3f( -3, -3, -3 ), new Vector3f( 13, 13, 3 ), .5f );
 			
-			ZeroBasedMarchingCubePolygonizer mc = new ZeroBasedMarchingCubePolygonizer();
+			MarchingCubePolygonizer mc = new MarchingCubePolygonizer();
 			
-			return mc.polygonize( f );
+			return mc.polygonize( f, get( "isolevel" ) );
 		}
 	}
 	

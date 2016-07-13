@@ -12,7 +12,52 @@ public class Preset
 		public float compute( Point3f p )
 		{
 			return 1.f / this.p.distanceSquared( p );
-		}		
+		}
+	}
+	
+	public static class ConvLine extends Primitive
+	{
+		Point3f p0, p1;
+		Vector3f v, vn;
+		float l, l2;
+		float s = 1;
+		float s2 = s*s;
+		
+		public ConvLine( Point3f p0, Point3f p1 )
+		{
+			this.p0 = p0;
+			this.p1 = p1;
+			
+			v = new Vector3f();
+			v.sub( p1, p0 );
+			
+			l = v.length();
+			l2 = l*l;
+			
+			vn = new Vector3f( v );
+			vn.scale( 1.f / l );
+		}
+
+		public float compute( Point3f p )
+		{
+			Vector3f d = new Vector3f( p );
+			d.sub( p0 );
+			
+			float dl2 = d.lengthSquared();
+			float dl = (float)Math.sqrt( dl2 );
+			
+			float x = d.dot( vn );
+			float x2 = x*x;
+			float p2 = 1 + s2 * (dl2 - x2);
+			float pl = (float)Math.sqrt( p2 );
+			float q2 = 1 + s2 * (dl2 + l2 - 2*l*x);
+			
+			float t1 = x / (2*p2 * (p2 + s2*x2));
+			float t2 = (l-x)/(2*p2*q2);
+			float t3 = (1/(2*s*p2*pl)) * (float)(Math.atan((s*x)/pl) + Math.atan((s*(l-x))/pl));
+			
+			return t1 + t2 + t3;
+		}
 	}
 	
 	public static class PullCone extends Primitive
@@ -179,6 +224,40 @@ public class Preset
 			
 			p1Computed.set( p0 );
 			p1Computed.add( v1 );
+		}
+
+		public Point3f getClosestPoint( Point3f p )
+		{
+			Vector3f v = new Vector3f( p1Computed );
+			v.sub( p0Computed );
+			Vector3f w = new Vector3f( p );
+			w.sub( p0Computed );
+			
+			float c1 = w.dot( v );
+			if( c1 < 0 )
+			{
+				Vector3f p0p = new Vector3f( p );
+				p0p.sub( p0Computed );
+				return new Point3f( p0p );
+			}
+			
+			
+			float c2 = v.dot( v );
+			if( c2 < c1 )
+			{
+				Vector3f p1p = new Vector3f( p );
+				p1p.sub( p1Computed );
+				return new Point3f( p1p );
+			}
+			
+			float b = c1 / c2;
+			Point3f pb = new Point3f( v );
+			pb.scale( b );
+			pb.add( p0Computed );
+			Vector3f pbp = new Vector3f( p );
+			pbp.sub( pb );
+			float ret = ff.compute( p.distanceSquared( pb ) ) * dm.compute( b ) * nf.compute( normal, pbp ); 
+			return new Point3f( pbp );
 		}
 	}
 	

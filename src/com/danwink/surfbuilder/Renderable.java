@@ -10,7 +10,12 @@ public abstract class Renderable
 	
 	public void var( String name, float min, float max )
 	{
-		vars.put( name, (min+max)/2.f );
+		var( name, min, max, (min+max)/2.f );
+	}
+	
+	public void var( String name, float min, float max, float value )
+	{
+		vars.put( name, value );
 		varList.add( new Var( name, min, max ) );
 	}
 	

@@ -31,7 +31,7 @@ public class SuperEllipticalFieldBuilder extends FieldBuilder
 					for( Primitive p : primitives )
 					{
 						//f += (float)Math.pow( Math.max( (1.f - (fixReturn( p.compute( point ) )) ) / p.r, 0 ), t );
-						f += (float)Math.exp( -fixReturn( p.compute( point ) )/2.f );
+						f += (float)Math.exp( -fixReturn( p.compute( point ) ) / 2.f );
 					}
 										
 					field.field[x][y][z] = f;
