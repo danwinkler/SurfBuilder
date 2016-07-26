@@ -16,7 +16,7 @@ import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
 import processing.core.PShape;
 
-public class Spiral extends PRenderer
+public class Faces extends PRenderer
 {
 	PShape shape;
 	
@@ -129,7 +129,7 @@ public class Spiral extends PRenderer
 	
 	public static void main( String[] args )
 	{
-		Spiral sp = new Spiral();
+		Faces sp = new Faces();
 		sp.run();
 	}
 }

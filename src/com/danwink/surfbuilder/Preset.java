@@ -1,5 +1,7 @@
 package com.danwink.surfbuilder;
 
+import com.sun.javafx.geom.Matrix3f;
+
 import jp.objectclub.vecmath.Point3f;
 import jp.objectclub.vecmath.Vector3f;
 
@@ -59,6 +61,109 @@ public class Preset
 			float t3 = (1/(2*s*p2*pl)) * (float)(Math.atan((s*x)/pl) + Math.atan((s*(l-x))/pl));
 			
 			return t1 + t2 + t3;
+		}
+	}
+	
+	public static class ConvTri extends Primitive
+	{
+		public Point3f p0, p1, p2, b;
+		public Vector3f u, v;
+		public float s, a1, a2, h, s2, h2;
+		public float c = 1;
+		
+		public ConvTri( Point3f p0, Point3f p1, Point3f p2, float s )
+		{
+			//Make p0 - p1 the longest side
+			//This could be a lot shorter, but at least its straightforward
+			float p0p1 = p0.distance( p1 );
+			float p1p2 = p1.distance( p2 );
+			float p2p0 = p2.distance( p0 );
+			if( p1p2 > p0p1 && p1p2 > p2p0 ) //If p1p2 is longest
+			{
+				Point3f p0t = p1;
+				Point3f p1t = p2;
+				Point3f p2t = p0;
+				
+				p0 = p0t;
+				p1 = p1t;
+				p2 = p2t;
+			}
+			else if( p2p0 > p0p1 && p2p0 > p1p2 ) //If p2p0 is longest
+			{
+				Point3f p0t = p2;
+				Point3f p1t = p0;
+				Point3f p2t = p1;
+				
+				p0 = p0t;
+				p1 = p1t;
+				p2 = p2t;
+			}
+			
+			this.p0 = p0;
+			this.p1 = p1;
+			this.p2 = p2;
+			
+			this.s = s;
+			
+			Vector3f v01 = new Vector3f( p1 );
+			v01.sub( p0 );
+			Vector3f v02 = new Vector3f( p2 );
+			v02.sub( p0 );
+			
+			Vector3f v01n = new Vector3f( v01 );
+			v01n.normalize();
+			Vector3f v02n = new Vector3f( v02 );
+			v02n.normalize();
+			
+			Vector3f av = new Vector3f( v01 );
+			float a = v01.dot( v02 ) / v01.dot( v01 );
+			av.scale( a );
+			
+			b = new Point3f( p0 );
+			b.add( av );
+			
+			u = new Vector3f( v01 );
+			u.normalize();
+			
+			v = new Vector3f( p2 );
+			v.sub( b );
+			h = v.length();
+			v.normalize();
+			
+			a1 = a;
+			a2 = v01.length() - a1;	
+			
+			h2 = h*h;
+			s2 = s*s;
+		}
+
+		public float compute( Point3f r )
+		{
+			Vector3f d = new Vector3f( r );
+			d.sub( b );
+			
+			float d2 = d.lengthSquared();
+			
+			float us = d.dot( u );
+			float vs = d.dot( v );
+			
+			float g = vs - h;
+			float q = 1 + s2 * (d2 - us*us - vs*vs);
+			float w = c*c - 2*h*s2*vs + h2*s2;
+			float m = a2*g + us*h;
+			float n = us*h - a1*g;
+			float A2 = a1*a1*w + h2*(q + s2*us*us) - 2*h*s2*a1*us*g;
+			float B2 = a2*a2*w + h2*(q + s2*us*us) + 2*h*s2*a2*us*g;
+			float C2 = 1 + s2 * (d2 - us*us);
+			float A = (float)Math.sqrt( A2 );
+			float B = (float)Math.sqrt( B2 );
+			float C = (float)Math.sqrt( C2 );
+			
+			float T1 = (n/A) * (float)( Math.atan( (s*(vs*h+a1*(a1+us))) / A ) + Math.atan( (s*(g*h+a1*us)) / -A ) );
+			float T2 = (m/B) * (float)( Math.atan( (s*(vs*h+a2*(a2-us))) / -B ) + Math.atan( (s*(g*h - a2*us)) / B ) );
+			float T3 = (vs/C) * (float)( Math.atan( (s*(a1+us)) / C ) + Math.atan( (s*(a2-us)) / C ) );
+			
+			return (1/(2*q*s)) * (T1+T2+T3);
 		}
 	}
 	

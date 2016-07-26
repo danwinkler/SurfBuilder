@@ -96,8 +96,8 @@ public class RendererTest
 			Point3f p1 = new Point3f( 0, 0, 0 );
 			Point3f p2 = new Point3f( 5 + (float)Math.cos( get( "angle" ) ) * 5, (float)Math.sin( get( "angle" ) ) * 5, 0 );
 			
-			Preset.ConvLine l0 = new Preset.ConvLine( p0, p1 );
-			Preset.ConvLine l1 = new Preset.ConvLine( p0, p2 );
+			Preset.ConvLine l0 = new Preset.ConvLine( p0, p1, 1 );
+			Preset.ConvLine l1 = new Preset.ConvLine( p0, p2, 1 );
 			
 			ArrayList<Primitive> primitives = new ArrayList<Primitive>();
 			
